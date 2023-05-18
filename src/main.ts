@@ -1,19 +1,9 @@
 import { invoke, convertFileSrc } from "@tauri-apps/api/tauri";
 import { open, save } from "@tauri-apps/api/dialog";
 
-// let greetInputEl: HTMLInputElement | null;
-// let greetMsgEl: HTMLElement | null;
-let imagePath = "";
-// let image: HTMLImageElement | null;
-
-// async function greet() {
-//   if (greetMsgEl && greetInputEl) {
-//     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-//     greetMsgEl.textContent = await invoke("greet", {
-//       name: greetInputEl.value,
-//     });
-//   }
-// }
+// TODO: replace this array with an implementation of a queue
+let imagePaths: string[] = [];
+// let imagePath = "";
 
 async function rotateHue(path: string) {
   console.log("About to rotate hue on path ", path);
@@ -28,7 +18,10 @@ async function rotateHue(path: string) {
   const imageEl = document.querySelector("#image");
   imageEl?.setAttribute("src", convertFileSrc(newPath));
   console.log("newPath after rotating hue is ", newPath);
-  imagePath = newPath; // does not work
+  // imagePath = newPath;
+  imagePaths.push(newPath);
+  const undoBtn = document.querySelector("#undo-button");
+  undoBtn?.removeAttribute("disabled");
   // const filePath = await save({
   //   filters: [
   //     {
@@ -37,6 +30,26 @@ async function rotateHue(path: string) {
   //     },
   //   ],
   // });
+}
+
+function undo() {
+  let lastImage = imagePaths.pop();
+  if (lastImage) {
+    deleteFile(lastImage);
+  }
+  const imageEl = document.querySelector("#image");
+  imageEl?.setAttribute(
+    "src",
+    convertFileSrc(imagePaths[imagePaths.length - 1])
+  );
+  if (imagePaths.length === 1) {
+    const undoBtn = document.querySelector("#undo-button");
+    undoBtn?.setAttribute("disabled", "true");
+  }
+}
+
+function deleteFile(path: string) {
+  invoke("delete_file", { path });
 }
 
 async function openFile() {
@@ -55,8 +68,13 @@ async function openFile() {
 
   if (typeof selected === "string") {
     const imageEl = document.querySelector("#image");
-    imagePath = selected;
-    imageEl?.setAttribute("src", convertFileSrc(imagePath));
+    const undoBtn = document.querySelector("#undo-button");
+    // imagePath = selected;
+    imagePaths = [];
+    undoBtn?.setAttribute("disabled", "true");
+    // TODO: tell Rust to dump all of the temporary images whose paths are in the array
+    imagePaths.push(selected);
+    imageEl?.setAttribute("src", convertFileSrc(imagePaths[0]));
   }
   console.log(selected);
 }
@@ -67,5 +85,10 @@ window.addEventListener("DOMContentLoaded", () => {
     ?.addEventListener("click", () => openFile());
   document
     .querySelector("#huerotate-button")
-    ?.addEventListener("click", () => rotateHue(imagePath));
+    ?.addEventListener("click", () =>
+      rotateHue(imagePaths[imagePaths.length - 1])
+    );
+  document
+    .querySelector("#undo-button")
+    ?.addEventListener("click", () => undo());
 });

@@ -3,6 +3,7 @@
 
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 use std::env;
+use std::fs;
 use chrono::{Utc, Timelike};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -12,14 +13,17 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
+fn delete_file(path: &str) {
+    fs::remove_file(path);
+}
+
+#[tauri::command]
 fn rotate_hue(path: &str, path_base: &str, path_end: &str, amount: i32) -> String {
-    // println!("Path is {path}");
     let img = image::open(path).unwrap();
-    // println!("dimensions {:?}", img.dimensions());
     let new_img = img.huerotate(amount);
     let now = Utc::now().num_seconds_from_midnight();
-    // let new_path = format!("{path_base}_diff.{path_end}");
     let new_path = format!("new_diff_{now}.{path_end}");
+    println!("{}", &new_path);
     new_img.save(&new_path).unwrap();
     new_path.to_owned()
 }
@@ -50,7 +54,7 @@ fn main() {
             }
             _ => {}
           })
-        .invoke_handler(tauri::generate_handler![greet, rotate_hue])
+        .invoke_handler(tauri::generate_handler![greet, rotate_hue, delete_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
