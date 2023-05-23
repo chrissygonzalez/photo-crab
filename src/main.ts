@@ -1,9 +1,12 @@
 import { invoke, convertFileSrc } from "@tauri-apps/api/tauri";
 import { open, save } from "@tauri-apps/api/dialog";
+import { copyFile } from "@tauri-apps/api/fs";
+import UndoQueue from "./UndoQueue";
 
 // TODO: replace this array with an implementation of a queue
 let imagePaths: string[] = [];
-// let imagePath = "";
+let originalPath = "";
+let undoQueue = new UndoQueue();
 
 async function rotateHue(path: string) {
   console.log("About to rotate hue on path ", path);
@@ -19,7 +22,8 @@ async function rotateHue(path: string) {
   imageEl?.setAttribute("src", convertFileSrc(newPath));
   console.log("newPath after rotating hue is ", newPath);
   // imagePath = newPath;
-  imagePaths.push(newPath);
+  // imagePaths.push(newPath);
+  undoQueue.push(newPath);
   const undoBtn = document.querySelector("#undo-button");
   undoBtn?.removeAttribute("disabled");
   // const filePath = await save({
@@ -33,23 +37,36 @@ async function rotateHue(path: string) {
 }
 
 function undo() {
-  let lastImage = imagePaths.pop();
-  if (lastImage) {
-    deleteFile(lastImage);
-  }
+  undoQueue.popBack();
+  let lastImage = undoQueue.getLast();
   const imageEl = document.querySelector("#image");
-  imageEl?.setAttribute(
-    "src",
-    convertFileSrc(imagePaths[imagePaths.length - 1])
-  );
-  if (imagePaths.length === 1) {
+  imageEl?.setAttribute("src", convertFileSrc(lastImage));
+  if (undoQueue.getLength() === 1) {
     const undoBtn = document.querySelector("#undo-button");
     undoBtn?.setAttribute("disabled", "true");
   }
 }
 
-function deleteFile(path: string) {
-  invoke("delete_file", { path });
+function deleteFile() {
+  undoQueue.popBack();
+  // invoke("delete_file", { path });
+}
+
+async function saveFile() {
+  console.log("original path is ", originalPath);
+  const originalPathSplit = originalPath.split(".");
+
+  let filePath =
+    (await save({
+      defaultPath: `${originalPathSplit[0]}_new.${originalPathSplit[1]}`,
+    })) || "";
+
+  let lastImage = undoQueue.getLast();
+  try {
+    await copyFile(`${lastImage}`, filePath);
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 async function openFile() {
@@ -73,10 +90,12 @@ async function openFile() {
     imagePaths = [];
     undoBtn?.setAttribute("disabled", "true");
     // TODO: tell Rust to dump all of the temporary images whose paths are in the array
+    originalPath = selected;
     imagePaths.push(selected);
+    undoQueue.push(selected);
     imageEl?.setAttribute("src", convertFileSrc(imagePaths[0]));
   }
-  console.log(selected);
+  // console.log(selected);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -85,10 +104,11 @@ window.addEventListener("DOMContentLoaded", () => {
     ?.addEventListener("click", () => openFile());
   document
     .querySelector("#huerotate-button")
-    ?.addEventListener("click", () =>
-      rotateHue(imagePaths[imagePaths.length - 1])
-    );
+    ?.addEventListener("click", () => rotateHue(undoQueue.getLast()));
   document
     .querySelector("#undo-button")
     ?.addEventListener("click", () => undo());
+  document
+    .querySelector("#save-button")
+    ?.addEventListener("click", () => saveFile());
 });

@@ -6,14 +6,9 @@ use std::env;
 use std::fs;
 use chrono::{Utc, Timelike};
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 #[tauri::command]
 fn delete_file(path: &str) {
+    println!("deleting file with path: {path}");
     fs::remove_file(path);
 }
 
@@ -40,12 +35,6 @@ fn main() {
       .add_item(CustomMenuItem::new("hide", "Hide"))
       .add_submenu(submenu);
 
-    // let dir = env::current_dir();
-    // println!("dir is {:?}", dir);
-    // let img = image::open("../src/assets/image.png").unwrap();
-    // println!("dimensions {:?}", img.dimensions());
-    // println!("{:?}", img.color());
-
     tauri::Builder::default()
         .menu(menu)
         .on_menu_event(|event| match event.menu_item_id() {
@@ -54,7 +43,7 @@ fn main() {
             }
             _ => {}
           })
-        .invoke_handler(tauri::generate_handler![greet, rotate_hue, delete_file])
+        .invoke_handler(tauri::generate_handler![rotate_hue, delete_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
