@@ -15,7 +15,6 @@ class UndoQueue {
     this.tail = 0;
     this.index = 0;
     this.length = 0;
-    console.log("called constructor!", this);
   }
 
   push(item: string) {
@@ -31,27 +30,35 @@ class UndoQueue {
   }
 
   pop() {
-    let prevHead = this.head.toString();
-    this.head++;
-    invoke("delete_file", { path: this.data[prevHead as keyof Image] });
-    delete this.data[prevHead as keyof Image];
-    this.length--;
+    if (this.length >= 1) {
+      let prevHead = this.head.toString();
+      this.head++;
+      invoke("delete_file", { path: this.data[prevHead as keyof Image] });
+      delete this.data[prevHead as keyof Image];
+      this.length--;
+    }
     console.log(this);
   }
 
   popBack() {
-    let prevTail = this.tail.toString();
-    this.tail--;
-    this.index--;
-    this.length--;
-    invoke("delete_file", { path: this.data[prevTail as keyof Image] });
-    delete this.data[prevTail as keyof Image];
+    if (this.length >= 1) {
+      let prevTail = this.tail.toString();
+      this.tail--;
+      this.index--;
+      this.length--;
+      invoke("delete_file", { path: this.data[prevTail as keyof Image] });
+      delete this.data[prevTail as keyof Image];
+    }
     console.log(this);
   }
 
   getLast() {
-    let tailIndex = this.tail.toString();
-    return this.data[tailIndex as keyof Image] || "";
+    if (this.length >= 1) {
+      let tailIndex = this.tail.toString();
+      return this.data[tailIndex as keyof Image] || "";
+    } else {
+      return null;
+    }
   }
 
   getLength() {
@@ -59,7 +66,14 @@ class UndoQueue {
   }
 
   clear() {
-    // delete all images in rust, reset to constructor values
+    for (let image in this.data) {
+      invoke("delete_file", { path: this.data[image as keyof Image] });
+    }
+    this.data = {} as Image;
+    this.head = 0;
+    this.tail = 0;
+    this.index = 0;
+    this.length = 0;
   }
 }
 

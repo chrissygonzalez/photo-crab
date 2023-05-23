@@ -3,14 +3,14 @@ import { open, save } from "@tauri-apps/api/dialog";
 import { copyFile } from "@tauri-apps/api/fs";
 import UndoQueue from "./UndoQueue";
 
-// TODO: replace this array with an implementation of a queue
-let imagePaths: string[] = [];
 let originalPath = "";
 let undoQueue = new UndoQueue();
 
 async function rotateHue(path: string) {
   console.log("About to rotate hue on path ", path);
-  const amount = 155;
+  const hueAmount: HTMLInputElement | null =
+    document.querySelector("#huerotate-amount");
+  const amount = hueAmount ? parseInt(hueAmount.value) : 180;
   const pathSplit = path.split(".");
   const newPath: string = await invoke("rotate_hue", {
     path: path,
@@ -19,37 +19,34 @@ async function rotateHue(path: string) {
     amount: amount,
   });
   const imageEl = document.querySelector("#image");
+  const undoBtn = document.querySelector("#undo-button");
+  const resetBtn = document.querySelector("#reset-button");
+
   imageEl?.setAttribute("src", convertFileSrc(newPath));
   console.log("newPath after rotating hue is ", newPath);
-  // imagePath = newPath;
-  // imagePaths.push(newPath);
   undoQueue.push(newPath);
-  const undoBtn = document.querySelector("#undo-button");
+
   undoBtn?.removeAttribute("disabled");
-  // const filePath = await save({
-  //   filters: [
-  //     {
-  //       name: "Image",
-  //       extensions: ["png", "jpeg"],
-  //     },
-  //   ],
-  // });
+  resetBtn?.removeAttribute("disabled");
 }
 
 function undo() {
   undoQueue.popBack();
   let lastImage = undoQueue.getLast();
-  const imageEl = document.querySelector("#image");
-  imageEl?.setAttribute("src", convertFileSrc(lastImage));
+  if (lastImage) {
+    const imageEl = document.querySelector("#image");
+    imageEl?.setAttribute("src", convertFileSrc(lastImage));
+  }
   if (undoQueue.getLength() === 1) {
     const undoBtn = document.querySelector("#undo-button");
     undoBtn?.setAttribute("disabled", "true");
   }
 }
 
-function deleteFile() {
-  undoQueue.popBack();
-  // invoke("delete_file", { path });
+function resetImage() {
+  undoQueue.clear();
+  const imageEl = document.querySelector("#image");
+  imageEl?.setAttribute("src", convertFileSrc(originalPath));
 }
 
 async function saveFile() {
@@ -70,7 +67,6 @@ async function saveFile() {
 }
 
 async function openFile() {
-  /* show open file dialog */
   const selected = await open({
     title: "Open Spreadsheet",
     multiple: false,
@@ -84,18 +80,18 @@ async function openFile() {
   });
 
   if (typeof selected === "string") {
+    undoQueue.clear();
+
     const imageEl = document.querySelector("#image");
     const undoBtn = document.querySelector("#undo-button");
-    // imagePath = selected;
-    imagePaths = [];
+    const resetBtn = document.querySelector("#reset-button");
+
     undoBtn?.setAttribute("disabled", "true");
-    // TODO: tell Rust to dump all of the temporary images whose paths are in the array
+    resetBtn?.setAttribute("disabled", "true");
+
     originalPath = selected;
-    imagePaths.push(selected);
-    undoQueue.push(selected);
-    imageEl?.setAttribute("src", convertFileSrc(imagePaths[0]));
+    imageEl?.setAttribute("src", convertFileSrc(selected));
   }
-  // console.log(selected);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -103,12 +99,31 @@ window.addEventListener("DOMContentLoaded", () => {
     .querySelector("#image-button")
     ?.addEventListener("click", () => openFile());
   document
+    .querySelector("#reset-button")
+    ?.addEventListener("click", () => resetImage());
+  document
     .querySelector("#huerotate-button")
-    ?.addEventListener("click", () => rotateHue(undoQueue.getLast()));
+    ?.addEventListener("click", () =>
+      rotateHue(undoQueue.getLast() || originalPath)
+    );
   document
     .querySelector("#undo-button")
     ?.addEventListener("click", () => undo());
   document
     .querySelector("#save-button")
     ?.addEventListener("click", () => saveFile());
+  document.querySelector("#huerotate-amount")?.addEventListener("input", () => {
+    let label = document.querySelector("#huerotate-amount-label");
+    let amount: HTMLInputElement | null =
+      document.querySelector("#huerotate-amount");
+    if (label && amount) {
+      label.textContent = amount.value;
+    }
+  });
+  let label = document.querySelector("#huerotate-amount-label");
+  let amount: HTMLInputElement | null =
+    document.querySelector("#huerotate-amount");
+  if (label && amount) {
+    label.textContent = amount.value;
+  }
 });
