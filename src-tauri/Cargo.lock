@@ -2020,6 +2020,7 @@ name = "photo_crab"
 version = "0.0.0"
 dependencies = [
  "chrono",
+ "ico",
  "image",
  "serde",
  "serde_json",

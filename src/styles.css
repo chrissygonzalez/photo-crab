@@ -4,9 +4,6 @@
   line-height: 24px;
   font-weight: 400;
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -19,53 +16,60 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  margin: 0;
+  height: 600px;
+  width: 800px;
+}
+
+.logo {
+  display: flex;
+  height: 35px;
+  width: 35px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.top-bar {
+  display: flex;
+  padding: 10px 10px 15px 10px;
+  background-color: #30496d;
 }
 
 .container {
   margin: 0;
   display: flex;
-  justify-content: center;
   align-items: start;
   text-align: center;
-  height: 600px;
-  width: 800px;
+  background-color: #f7f6ee;
+  height: 515px;
 }
 
-.buttons {
+.top-btn {
+  width: 100px;
+  height: 35px;
+  border-radius: 4px;
+  border: 1px solid #5a78a3;
+  text-align: center;
+  font-size: 12px;
+  margin-right: 10px;
+  background-color: #30496d;
+  color: #fff;
+}
+
+.actions {
   display: flex;
   flex-direction: column;
-  margin-left: 15px;
+  background-color: #a3afc0;
+  height: 100%;
 }
 
-.row {
+.preview {
+  width: 100%;
+  height: 515px;
   display: flex;
   justify-content: center;
-}
-
-.image-container {
-  outline: solid;
-}
-
-img {
-  height: 400px;
-  max-width: 500px;
-  min-width: 400px;
-  outline: solid;
-  object-fit: contain;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
-}
-
-h1 {
-  text-align: center;
+  align-items: center;
 }
 
 input,
@@ -89,15 +93,17 @@ button {
 button:disabled {
   cursor: default;
   border-color: none;
-  background-color: #333;
-  color: #999;
+  background-color: #4f6789;
+  color: #a3afc0;
+  border: none;
+  box-shadow: none;
 }
 
 button:hover {
-  border-color: #396cd8;
+  border-color: #fff;
 }
 button:active {
-  border-color: #396cd8;
+  border-color: #fff;
   background-color: #e8e8e8;
 }
 
@@ -106,8 +112,22 @@ button {
   outline: none;
 }
 
-#greet-input {
-  margin-right: 5px;
+img {
+  height: 400px;
+  max-width: 500px;
+  min-width: 400px;
+  border: 1px solid #d7d7d7;
+  object-fit: contain;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -124,8 +144,5 @@ button {
   button {
     color: #ffffff;
     background-color: #0f0f0f98;
-  }
-  button:active {
-    background-color: #0f0f0f69;
   }
 }

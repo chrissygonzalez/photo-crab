@@ -6,6 +6,18 @@ import UndoQueue from "./UndoQueue";
 let originalPath = "";
 let undoQueue = new UndoQueue();
 
+function showImage(path: string) {
+  const imageEl = document.querySelector("#image");
+  imageEl?.setAttribute("src", convertFileSrc(path));
+}
+
+async function saveIco(path: string) {
+  console.log("About to save ico from path ", path);
+  await invoke("save_ico", {
+    path: path,
+  });
+}
+
 async function rotateHue(path: string) {
   console.log("About to rotate hue on path ", path);
   const hueAmount: HTMLInputElement | null =
@@ -14,15 +26,13 @@ async function rotateHue(path: string) {
   const pathSplit = path.split(".");
   const newPath: string = await invoke("rotate_hue", {
     path: path,
-    pathBase: pathSplit[0],
     pathEnd: pathSplit[1],
     amount: amount,
   });
-  const imageEl = document.querySelector("#image");
   const undoBtn = document.querySelector("#undo-button");
   const resetBtn = document.querySelector("#reset-button");
 
-  imageEl?.setAttribute("src", convertFileSrc(newPath));
+  showImage(newPath);
   console.log("newPath after rotating hue is ", newPath);
   undoQueue.push(newPath);
 
@@ -32,12 +42,11 @@ async function rotateHue(path: string) {
 
 function undo() {
   undoQueue.popBack();
-  let lastImage = undoQueue.getLast();
+  let lastImage = undoQueue.getLast() || originalPath;
   if (lastImage) {
-    const imageEl = document.querySelector("#image");
-    imageEl?.setAttribute("src", convertFileSrc(lastImage));
+    showImage(lastImage);
   }
-  if (undoQueue.getLength() === 1) {
+  if (undoQueue.getLength() === 0) {
     const undoBtn = document.querySelector("#undo-button");
     undoBtn?.setAttribute("disabled", "true");
   }
@@ -45,8 +54,7 @@ function undo() {
 
 function resetImage() {
   undoQueue.clear();
-  const imageEl = document.querySelector("#image");
-  imageEl?.setAttribute("src", convertFileSrc(originalPath));
+  showImage(originalPath);
 }
 
 async function saveFile() {
@@ -82,7 +90,7 @@ async function openFile() {
   if (typeof selected === "string") {
     undoQueue.clear();
 
-    const imageEl = document.querySelector("#image");
+    // const imageEl = document.querySelector("#image");
     const undoBtn = document.querySelector("#undo-button");
     const resetBtn = document.querySelector("#reset-button");
 
@@ -90,7 +98,7 @@ async function openFile() {
     resetBtn?.setAttribute("disabled", "true");
 
     originalPath = selected;
-    imageEl?.setAttribute("src", convertFileSrc(selected));
+    showImage(originalPath);
   }
 }
 
@@ -112,6 +120,9 @@ window.addEventListener("DOMContentLoaded", () => {
   document
     .querySelector("#save-button")
     ?.addEventListener("click", () => saveFile());
+  document
+    .querySelector("#save-ico-button")
+    ?.addEventListener("click", () => saveIco(originalPath));
   document.querySelector("#huerotate-amount")?.addEventListener("input", () => {
     let label = document.querySelector("#huerotate-amount-label");
     let amount: HTMLInputElement | null =
